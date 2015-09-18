@@ -4,7 +4,8 @@ To start the task-module:
 - Chose module:
 ```xml
     <modules>
-      <module>task1</module>
+     <!--<module>task1</module>-->
+     <module>task2</module>
     </modules>
 ```
 

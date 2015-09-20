@@ -11,9 +11,9 @@ import java.util.Random;
 
 public class UserHelper {
 
-    public static final String NAME = "name";
-    public static final String SURNAME = "surname";
-    public static final String EMAIL = "@gmail.com";
+    private static final String NAME = "name";
+    private static final String SURNAME = "surname";
+    private static final String EMAIL = "@gmail.com";
 
     private static Random random = new Random();
 

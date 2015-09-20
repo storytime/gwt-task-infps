@@ -1,8 +1,5 @@
 package org.example.model;
 
-/**
- * @author by Bogdan.Fedorchenko on 9/15/2015.
- */
 public class User{
 
     private Integer id;
@@ -19,51 +16,25 @@ public class User{
         this.role = role;
     }
 
-    public User(){}
 
     public Integer getId() {
         return id;
-    }
-
-    public User setId(Integer id) {
-        this.id = id;
-        return this;
     }
 
     public String getName() {
         return name;
     }
 
-    public User setName(String name) {
-        this.name = name;
-        return this;
-    }
-
     public String getSurName() {
         return surName;
-    }
-
-    public User setSurName(String surName) {
-        this.surName = surName;
-        return this;
     }
 
     public String getEmail() {
         return email;
     }
 
-    public User setEmail(String email) {
-        this.email = email;
-        return this;
-    }
-
     public Roles getRole() {
         return role;
-    }
-
-    public User setRole(Roles role) {
-        this.role = role;
-        return this;
     }
 
     @Override
@@ -75,18 +46,5 @@ public class User{
                 ", email='" + email + '\'' +
                 ", role=" + role +
                 '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o instanceof User) {
-            return id == ((User) o).id;
-        }
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return id;
     }
 }

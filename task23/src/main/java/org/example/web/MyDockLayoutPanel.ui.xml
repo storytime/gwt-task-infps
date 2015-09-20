@@ -29,6 +29,17 @@
 
         <g:east size="900">
             <g:AbsolutePanel>
+
+                <g:VerticalPanel width="100%">
+                    <g:HorizontalPanel>
+                        <g:CheckBox ui:field='disableCb' width="150">Disable CheckBoxes</g:CheckBox>
+                    </g:HorizontalPanel>
+
+                    <g:HorizontalPanel>
+                        <g:CheckBox ui:field='selectionCb' width="150">Disable Selection</g:CheckBox>
+                    </g:HorizontalPanel>
+                </g:VerticalPanel>
+
                 <g:at left='0' top='200'>
                     <g:Button ui:field="goButton">Go</g:Button>
                 </g:at>

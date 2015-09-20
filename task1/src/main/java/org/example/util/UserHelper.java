@@ -8,9 +8,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-/**
- * @author by Bogdan.Fedorchenko on 9/15/2015.
- */
 public class UserHelper {
 
     public static final String NAME = "name";

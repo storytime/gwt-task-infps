@@ -34,20 +34,21 @@ public class CheckBoxHeader extends Header<Boolean> implements HasValue<Boolean>
 
     public CheckBoxHeader() {
         super(new CheckboxCell());
-        checked = false;
+        this.checked = false;
     }
 
     @Override
     public Boolean getValue() {
-        return checked;
+        return this.checked;
     }
 
     @Override
     public void onBrowserEvent(Context context, Element elem, NativeEvent nativeEvent) {
         int eventType = Event.as(nativeEvent).getTypeInt();
+
         if (eventType == Event.ONCHANGE) {
             nativeEvent.preventDefault();
-            ValueChangeEvent.fire(this, !checked);
+            ValueChangeEvent.fire(this, !this.checked);
         }
     }
 
@@ -63,12 +64,12 @@ public class CheckBoxHeader extends Header<Boolean> implements HasValue<Boolean>
 
     @Override
     public void setValue(Boolean value) {
-        checked = value;
+        this.checked = value;
     }
 
     @Override
     public void setValue(Boolean value, boolean fireEvents) {
-        checked = value;
+        this.checked = value;
         if (fireEvents) {
             ValueChangeEvent.fire(this, value);
         }

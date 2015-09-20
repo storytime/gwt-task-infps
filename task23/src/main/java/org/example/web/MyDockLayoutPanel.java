@@ -1,8 +1,12 @@
 package org.example.web;
 
+import com.google.gwt.cell.client.Cell.Context;
 import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.SelectionCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.InputElement;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -15,12 +19,12 @@ import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.DefaultSelectionEventManager;
 import com.google.gwt.view.client.ListDataProvider;
-import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.SelectionChangeEvent;
+import com.google.gwt.view.client.SingleSelectionModel;
 import org.example.model.User;
 import org.example.util.UserHelper;
 
-import java.util.List;
+import java.util.*;
 
 public class MyDockLayoutPanel extends Composite {
 
@@ -28,13 +32,12 @@ public class MyDockLayoutPanel extends Composite {
     private static final String CLOSE = "Close";
     private static final String BR = "</br>";
     private static final String ID = "ID";
-    private static final String SEPARATOR = ";     ";
     private static final String EMPTY_STRING = "";
     private static final String NAME = "Name";
     private static final String ROLE = "Role";
-    private static final String DATA_GRID_EMPTY = "DataGridEmpty";
     private static final String USER_INFO = "User info";
     private static final String USERS_SEPARATOR = "    ";
+    private static final String WIDTH = "100%";
 
     private static MyDockLayoutPanelUiBinder uiBinder = GWT.create(MyDockLayoutPanelUiBinder.class);
 
@@ -44,49 +47,96 @@ public class MyDockLayoutPanel extends Composite {
     @UiField(provided = true)
     public CellTable<User> cellTable;
 
-    @UiField
+    @UiField(provided = true)
     public TextBox email;
 
-    @UiField
+    @UiField(provided = true)
     public TextBox surname;
 
     @UiField(provided = true)
     public Button goButton;
+
+    @UiField(provided = true)
+    public CheckBox disableCb;
+
+    @UiField(provided = true)
+    public CheckBox selectionCb;
+
     private CheckBoxHeader headerCheckbox;
-    private MultiSelectionModel<User> selectionModel;
+    private SingleSelectionModel<User> selectionModel;
+    private List<User> selectedUsers = new ArrayList<User>();
 
     public MyDockLayoutPanel() {
-        initDataGrid();
+        initCellTable();
+        initTextBoxes();
         initGoButton();
+        initCellTableMainColumns();
+        initDataSource();
+        initSelectionModel();
+        initHeaderCheckbox();
+        initTableCheckBoxes();
+        initSelectionCheckBox();
+        initDisableCbCheckBox();
         initWidget(uiBinder.createAndBindUi(this));
     }
 
-    private void initDataGrid() {
-        headerCheckbox = new CheckBoxHeader();
-        cellTable = new CellTable<User>();
-        cellTable.setAutoHeaderRefreshDisabled(true);
-        cellTable.setEmptyTableWidget(new Label(DATA_GRID_EMPTY));
+    private void initTextBoxes() {
+        email = new TextBox();
+        surname = new TextBox();
+    }
 
-        initColumns();
-        initDataSource();
-        initSelectionModel();
-        initCellTable();
-        initTableCheckBoxes();
+    private void initCellTable() {
+        cellTable = new CellTable<User>();
+        cellTable.setWidth(WIDTH, true);
+        cellTable.setAutoHeaderRefreshDisabled(true);
+    }
+
+    private void initDisableCbCheckBox() {
+        disableCb = new CheckBox();
+        //TODO: 3.1
+    }
+
+    private void initSelectionCheckBox() {
+        selectionCb = new CheckBox();
+
+        selectionCb.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+            @Override
+            public void onValueChange(ValueChangeEvent<Boolean> event) {
+                if (event.getValue()) {
+                    Set<User> selectedItemInOldSelectionModel = selectionModel.getSelectedSet();
+
+                    selectionModel = new SingleSelectionModel<User>();
+                    cellTable.setSelectionModel(selectionModel, getBlackListSelectionManager(0, 1, 3, 4));
+
+                    selectItemAfterSelectionModelReplacing(selectedItemInOldSelectionModel);
+                } else {
+                    //selection is available
+                    initSelectionModel();
+                }
+
+            }
+        });
+    }
+
+    private void selectItemAfterSelectionModelReplacing(Collection<User> selectedSet) {
+        for (User user : selectedSet) {
+            selectionModel.setSelected(user, true);
+        }
     }
 
     private void initGoButton() {
         goButton = new Button();
         goButton.setEnabled(false);
+
         goButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
 
                 StringBuilder res = new StringBuilder();
-                for (User item : cellTable.getVisibleItems()) {
-                    if (selectionModel.isSelected(item)) {
-                        res.append(item.getId()).append(USERS_SEPARATOR).append(item.getEmail()).append(BR);
-                    }
+                for (User item : selectedUsers) {
+                    res.append(item.getId()).append(USERS_SEPARATOR).append(item.getEmail()).append(BR);
                 }
+
                 showDialogBox(res);
             }
         });
@@ -103,6 +153,7 @@ public class MyDockLayoutPanel extends Composite {
     private void initDataSource() {
         ListDataProvider<User> dataProvider = new ListDataProvider<User>();
         List<User> list = dataProvider.getList();
+
         final List<User> userList = UserHelper.generateUserList(USER_GENERATED_COUNT);
 
         for (User u : userList) {
@@ -112,103 +163,131 @@ public class MyDockLayoutPanel extends Composite {
         dataProvider.addDataDisplay(cellTable);
     }
 
-    private void initCellTable() {
-        cellTable.setWidth("100%", true);
-        cellTable.setAutoHeaderRefreshDisabled(true);
-        cellTable.setAutoFooterRefreshDisabled(true);
-        cellTable.setSelectionModel(selectionModel, DefaultSelectionEventManager.<User>createCheckboxManager());
-    }
 
     private void initSelectionModel() {
-        selectionModel = new MultiSelectionModel<User>();
+
+        //if we put sel. checkbox, we need to know what item were selected
+        Set<User> selectedItemInOldSelectionModel = new HashSet<User>(1);
+        if (selectionModel != null && selectionModel.getSelectedSet().size() > 0) {
+            selectedItemInOldSelectionModel = selectionModel.getSelectedSet();
+        }
+
+        selectionModel = new SingleSelectionModel<User>();
         selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
-
             public void onSelectionChange(SelectionChangeEvent event) {
-                fillDataFields();
-                boolean allRowsAreSelected = true;
 
-                for (User item : cellTable.getVisibleItems()) {
-                    if (!selectionModel.isSelected(item)) {
-                        allRowsAreSelected = false;
-                    }
+                //fillDataFields
+                Set<User> selectedSet = selectionModel.getSelectedSet();
+
+                if (selectedSet.isEmpty()){
+                    email.setValue(EMPTY_STRING);
+                    surname.setValue(EMPTY_STRING);
+                    return;
                 }
 
-                if (selectionModel.getSelectedSet().size() > 0) {
+                for (User user : selectedSet) {
+                    email.setValue(user.getEmail());
+                    surname.setValue(user.getSurName());
+                }
+            }
+        });
+
+        //add CB col. to BL
+        cellTable.setSelectionModel(selectionModel, getBlackListSelectionManager(0));
+
+        //select element from prev. selection model
+        if (selectedItemInOldSelectionModel.size() > 0)
+            selectItemAfterSelectionModelReplacing(selectedItemInOldSelectionModel);
+    }
+
+    private void initHeaderCheckbox(){
+        headerCheckbox = new CheckBoxHeader();
+        headerCheckbox.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+            @Override
+            public void onValueChange(ValueChangeEvent<Boolean> event) {
+                selectedUsers.clear();
+
+                if (event.getValue()) {
+                    selectedUsers.addAll(cellTable.getVisibleItems());
+                    headerCheckbox.setValue(true);
+                    goButton.setEnabled(true);
+                } else {
+                    goButton.setEnabled(false);
+                    headerCheckbox.setValue(false);
+                }
+
+                cellTable.redraw();
+                cellTable.redrawHeaders();
+            }
+        });
+    }
+
+    private void initTableCheckBoxes() {
+        final Column<User, Boolean> checkColumn = new Column<User, Boolean>(new CheckboxCell()) {
+
+            @Override
+            public Boolean getValue(User user) {
+                return selectedUsers.contains(user);
+            }
+
+            @Override
+            public void onBrowserEvent(Context context, Element elem, User user, NativeEvent event) {
+                super.onBrowserEvent(context, elem, user, event);
+
+                Element target = event.getEventTarget().cast();
+                final InputElement input = target.cast();
+
+                if (input.isChecked()) {
+                    selectedUsers.add(user);
+                } else {
+                    selectedUsers.remove(user);
+                }
+
+                //set go button status
+                if (selectedUsers.size() > 0) {
                     goButton.setEnabled(true);
                 } else {
                     goButton.setEnabled(false);
                 }
 
-                if (allRowsAreSelected) {
+                //set header status
+                if (selectedUsers.size() == cellTable.getVisibleItemCount()) {
                     headerCheckbox.setValue(true);
-                    cellTable.redrawHeaders();
                 } else {
                     headerCheckbox.setValue(false);
-                    cellTable.redrawHeaders();
                 }
-            }
-        });
-    }
 
-    private void fillDataFields() {
-        email.setValue(EMPTY_STRING);
-        surname.setValue(EMPTY_STRING);
-        for (User user : selectionModel.getSelectedSet()) {
-            if (email.getValue().isEmpty()) {
-                email.setValue(user.getEmail());
-            } else {
-                email.setValue(email.getValue() + SEPARATOR + user.getEmail());
-            }
-
-            if (surname.getValue().isEmpty()) {
-                surname.setValue(user.getSurName());
-            } else {
-                surname.setValue(surname.getValue() + SEPARATOR + user.getSurName());
-            }
-        }
-    }
-
-    private void initTableCheckBoxes() {
-        headerCheckbox.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
-            @Override
-            public void onValueChange(ValueChangeEvent<Boolean> event) {
-                for (User item : cellTable.getVisibleItems()) {
-                    selectionModel.setSelected(item, event.getValue());
-                }
-            }
-        });
-
-        final Column<User, Boolean> checkColumn = new Column<User, Boolean>(new CheckboxCell()) {
-            @Override
-            public Boolean getValue(User object) {
-                return selectionModel.isSelected(object);
+                cellTable.redrawHeaders();
+                cellTable.redraw();
             }
         };
 
-        headerCheckbox.setValue(false);
         cellTable.insertColumn(0, checkColumn, headerCheckbox);
     }
 
+    private void initCellTableMainColumns() {
 
-    private void initColumns() {
-        TextColumn<User> nameColumn = new TextColumn<User>() {
-            @Override
-            public String getValue(User contact) {
-                return contact.getName();
-            }
-        };
         TextColumn<User> idColumn = new TextColumn<User>() {
             @Override
             public String getValue(User contact) {
                 return contact.getId().toString();
             }
         };
+
+        TextColumn<User> nameColumn = new TextColumn<User>() {
+            @Override
+            public String getValue(User contact) {
+                return contact.getName();
+            }
+        };
+
         Column<User, String> roleColumn = new Column<User, String>(new SelectionCell(UserHelper.getAcceptableValues())) {
             @Override
             public String getValue(User user) {
                 return user.getRole().toString();
             }
         };
+
         cellTable.addColumn(idColumn, ID);
         cellTable.addColumn(nameColumn, NAME);
         cellTable.addColumn(roleColumn, ROLE);
@@ -216,10 +295,10 @@ public class MyDockLayoutPanel extends Composite {
 
     private DialogBox createDialogBox(final DialogBox dialogBox, final String text) {
 
-        //set main text
+        // set main text
         dialogBox.setText(USER_INFO);
 
-        //create header
+        // create header
         VerticalPanel dialogContents = new VerticalPanel();
         dialogContents.setSpacing(4);
         dialogBox.setWidget(dialogContents);
@@ -237,5 +316,10 @@ public class MyDockLayoutPanel extends Composite {
         dialogContents.add(closeButton);
         dialogContents.setCellHorizontalAlignment(closeButton, HasHorizontalAlignment.ALIGN_LEFT);
         return dialogBox;
+    }
+
+    private DefaultSelectionEventManager<User> getBlackListSelectionManager(int... col) {
+        return DefaultSelectionEventManager
+                .createCustomManager(new DefaultSelectionEventManager.BlacklistEventTranslator<User>(col));
     }
 }

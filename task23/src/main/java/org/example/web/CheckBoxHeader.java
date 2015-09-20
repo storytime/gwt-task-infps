@@ -19,16 +19,30 @@ import com.google.gwt.user.client.ui.HasValue;
 public class CheckBoxHeader extends Header<Boolean> implements HasValue<Boolean> {
 
     private boolean checked;
+    private boolean isEnabled = true;
     private HandlerManager handlerManager;
+
     private final SafeHtml INPUT_CHECKED = SafeHtmlUtils.fromSafeConstant("<input type=\"checkbox\" tabindex=\"-1\" checked/>");
     private final SafeHtml INPUT_UNCHECKED = SafeHtmlUtils.fromSafeConstant("<input type=\"checkbox\" tabindex=\"-1\"/>");
 
+    private final SafeHtml INPUT_CHECKED_DISABLED = SafeHtmlUtils.fromSafeConstant("<input type=\"checkbox\" tabindex=\"-1\" checked disabled=\"disabled\"/>");
+    private final SafeHtml INPUT_UNCHECKED_DISABLED = SafeHtmlUtils.fromSafeConstant("<input type=\"checkbox\" tabindex=\"-1\" disabled=\"disabled\"/>");
+
     @Override
     public void render(Context context, SafeHtmlBuilder sb) {
-        if (Boolean.TRUE.equals(this.getValue())) {
-            sb.append(INPUT_CHECKED);
+        if (isEnabled) {
+            //normal render
+            if (getValue()) {
+                sb.append(INPUT_CHECKED);
+            } else {
+                sb.append(INPUT_UNCHECKED);
+            }
         } else {
-            sb.append(INPUT_UNCHECKED);
+            if (getValue()) {
+                sb.append(INPUT_CHECKED_DISABLED);
+            } else {
+                sb.append(INPUT_UNCHECKED_DISABLED);
+            }
         }
     }
 
@@ -40,6 +54,10 @@ public class CheckBoxHeader extends Header<Boolean> implements HasValue<Boolean>
     @Override
     public Boolean getValue() {
         return this.checked;
+    }
+
+    public void setEnabled(Boolean value) {
+        this.isEnabled = value;
     }
 
     @Override

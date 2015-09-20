@@ -11,6 +11,9 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellTable;
@@ -65,6 +68,7 @@ public class MyDockLayoutPanel extends Composite {
     private CheckBoxHeader headerCheckbox;
     private SingleSelectionModel<User> selectionModel;
     private List<User> selectedUsers = new ArrayList<User>();
+    private boolean isCheckboxesDisabled = false;
 
     public MyDockLayoutPanel() {
         initCellTable();
@@ -93,7 +97,17 @@ public class MyDockLayoutPanel extends Composite {
 
     private void initDisableCbCheckBox() {
         disableCb = new CheckBox();
-        //TODO: 3.1
+
+        disableCb.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+            @Override
+            public void onValueChange(ValueChangeEvent<Boolean> event) {
+                isCheckboxesDisabled = event.getValue();
+                headerCheckbox.setEnabled(!isCheckboxesDisabled);
+                cellTable.redrawHeaders();
+                cellTable.redraw();
+            }
+        });
+
     }
 
     private void initSelectionCheckBox() {
@@ -179,7 +193,7 @@ public class MyDockLayoutPanel extends Composite {
                 //fillDataFields
                 Set<User> selectedSet = selectionModel.getSelectedSet();
 
-                if (selectedSet.isEmpty()){
+                if (selectedSet.isEmpty()) {
                     email.setValue(EMPTY_STRING);
                     surname.setValue(EMPTY_STRING);
                     return;
@@ -200,7 +214,7 @@ public class MyDockLayoutPanel extends Composite {
             selectItemAfterSelectionModelReplacing(selectedItemInOldSelectionModel);
     }
 
-    private void initHeaderCheckbox(){
+    private void initHeaderCheckbox() {
         headerCheckbox = new CheckBoxHeader();
         headerCheckbox.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
             @Override
@@ -223,46 +237,7 @@ public class MyDockLayoutPanel extends Composite {
     }
 
     private void initTableCheckBoxes() {
-        final Column<User, Boolean> checkColumn = new Column<User, Boolean>(new CheckboxCell()) {
-
-            @Override
-            public Boolean getValue(User user) {
-                return selectedUsers.contains(user);
-            }
-
-            @Override
-            public void onBrowserEvent(Context context, Element elem, User user, NativeEvent event) {
-                super.onBrowserEvent(context, elem, user, event);
-
-                Element target = event.getEventTarget().cast();
-                final InputElement input = target.cast();
-
-                if (input.isChecked()) {
-                    selectedUsers.add(user);
-                } else {
-                    selectedUsers.remove(user);
-                }
-
-                //set go button status
-                if (selectedUsers.size() > 0) {
-                    goButton.setEnabled(true);
-                } else {
-                    goButton.setEnabled(false);
-                }
-
-                //set header status
-                if (selectedUsers.size() == cellTable.getVisibleItemCount()) {
-                    headerCheckbox.setValue(true);
-                } else {
-                    headerCheckbox.setValue(false);
-                }
-
-                cellTable.redrawHeaders();
-                cellTable.redraw();
-            }
-        };
-
-        cellTable.insertColumn(0, checkColumn, headerCheckbox);
+        cellTable.insertColumn(0, new CustomColumn(), headerCheckbox);
     }
 
     private void initCellTableMainColumns() {
@@ -322,4 +297,72 @@ public class MyDockLayoutPanel extends Composite {
         return DefaultSelectionEventManager
                 .createCustomManager(new DefaultSelectionEventManager.BlacklistEventTranslator<User>(col));
     }
+
+
+    private class CustomColumn extends Column<User, Boolean> {
+
+        public CustomColumn() {
+            super(new CustomCell());
+        }
+
+        @Override
+        public Boolean getValue(User user) {
+            return selectedUsers.contains(user);
+        }
+
+        @Override
+        public void onBrowserEvent(Context context, Element elem, User user, NativeEvent event) {
+            super.onBrowserEvent(context, elem, user, event);
+
+            Element target = event.getEventTarget().cast();
+            final InputElement input = target.cast();
+
+            //select user
+            if (input.isChecked()) {
+                selectedUsers.add(user);
+            } else {
+                selectedUsers.remove(user);
+            }
+
+            //set go button status
+            if (selectedUsers.size() > 0) {
+                goButton.setEnabled(true);
+            } else {
+                goButton.setEnabled(false);
+            }
+
+            //set header status
+            if (selectedUsers.size() == cellTable.getVisibleItemCount()) {
+                headerCheckbox.setValue(true);
+            } else {
+                headerCheckbox.setValue(false);
+            }
+
+            cellTable.redrawHeaders();
+            cellTable.redraw();
+        }
+    }
+
+    private class CustomCell extends CheckboxCell {
+
+        private final SafeHtml INPUT_CHECKED_DISABLED = SafeHtmlUtils.fromSafeConstant("<input type=\"checkbox\" tabindex=\"-1\" checked disabled=\"disabled\"/>");
+        private final SafeHtml INPUT_UNCHECKED_DISABLED = SafeHtmlUtils.fromSafeConstant("<input type=\"checkbox\" tabindex=\"-1\" disabled=\"disabled\"/>");
+
+        @Override
+        public void render(Context context, Boolean isCurrentCellChecked, SafeHtmlBuilder sb) {
+
+            //if cb dis not sel.  typical rendering
+            if (!isCheckboxesDisabled) {
+                super.render(context, isCurrentCellChecked, sb);
+                return;
+            }
+
+            if (isCurrentCellChecked) {
+                sb.append(INPUT_CHECKED_DISABLED);
+            } else {
+                sb.append(INPUT_UNCHECKED_DISABLED);
+            }
+        }
+    }
+
 }

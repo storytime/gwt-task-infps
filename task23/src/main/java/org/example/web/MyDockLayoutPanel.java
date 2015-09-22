@@ -120,7 +120,7 @@ public class MyDockLayoutPanel extends Composite {
                     Set<User> selectedItemInOldSelectionModel = selectionModel.getSelectedSet();
 
                     selectionModel = new SingleSelectionModel<User>();
-                    cellTable.setSelectionModel(selectionModel, getBlackListSelectionManager(0, 1, 3, 4));
+                    cellTable.setSelectionModel(selectionModel, getBlackListSelectionManager(0, 1, 2, 3));
 
                     selectItemAfterSelectionModelReplacing(selectedItemInOldSelectionModel);
                 } else {

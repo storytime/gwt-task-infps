@@ -11,6 +11,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.SimpleEventBus;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
@@ -21,17 +22,20 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.DefaultSelectionEventManager;
-import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
+import org.example.bus.EventBusHolder;
+import org.example.bus.event.*;
+import org.example.bus.handler.*;
 import org.example.model.User;
+import org.example.presenter.Display;
+import org.example.presenter.PersonPresenter;
 import org.example.util.UserHelper;
 
 import java.util.*;
 
-public class MyDockLayoutPanel extends Composite {
+public class MyDockLayoutPanelView extends Composite implements Display {
 
-    private static final int USER_GENERATED_COUNT = 5;
     private static final String CLOSE = "Close";
     private static final String BR = "</br>";
     private static final String ID = "ID";
@@ -44,8 +48,10 @@ public class MyDockLayoutPanel extends Composite {
 
     private static MyDockLayoutPanelUiBinder uiBinder = GWT.create(MyDockLayoutPanelUiBinder.class);
 
-    interface MyDockLayoutPanelUiBinder extends UiBinder<Widget, MyDockLayoutPanel> {
+    interface MyDockLayoutPanelUiBinder extends UiBinder<Widget, MyDockLayoutPanelView> {
     }
+
+    private PersonPresenter presenter;
 
     @UiField(provided = true)
     public CellTable<User> cellTable;
@@ -65,22 +71,24 @@ public class MyDockLayoutPanel extends Composite {
     @UiField(provided = true)
     public CheckBox selectionCb;
 
+    final SimpleEventBus simpleEventBus = EventBusHolder.getInstance();
+
     private CheckBoxHeader headerCheckbox;
     private SingleSelectionModel<User> selectionModel;
     private List<User> selectedUsers = new ArrayList<User>();
     private boolean isCheckboxesDisabled = false;
 
-    public MyDockLayoutPanel() {
+    public MyDockLayoutPanelView() {
         initCellTable();
         initTextBoxes();
         initGoButton();
         initCellTableMainColumns();
-        initDataSource();
         initSelectionModel();
         initHeaderCheckbox();
         initTableCheckBoxes();
         initSelectionCheckBox();
         initDisableCbCheckBox();
+        initSimpleEventBus();
         initWidget(uiBinder.createAndBindUi(this));
     }
 
@@ -97,17 +105,12 @@ public class MyDockLayoutPanel extends Composite {
 
     private void initDisableCbCheckBox() {
         disableCb = new CheckBox();
-
         disableCb.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
             @Override
             public void onValueChange(ValueChangeEvent<Boolean> event) {
-                isCheckboxesDisabled = event.getValue();
-                headerCheckbox.setEnabled(!isCheckboxesDisabled);
-                cellTable.redrawHeaders();
-                cellTable.redraw();
+                simpleEventBus.fireEvent(new DisableCheckBoxesEvent().setSelected(event.getValue()));
             }
         });
-
     }
 
     private void initSelectionCheckBox() {
@@ -117,17 +120,10 @@ public class MyDockLayoutPanel extends Composite {
             @Override
             public void onValueChange(ValueChangeEvent<Boolean> event) {
                 if (event.getValue()) {
-                    Set<User> selectedItemInOldSelectionModel = selectionModel.getSelectedSet();
-
-                    selectionModel = new SingleSelectionModel<User>();
-                    cellTable.setSelectionModel(selectionModel, getBlackListSelectionManager(0, 1, 2, 3));
-
-                    selectItemAfterSelectionModelReplacing(selectedItemInOldSelectionModel);
+                    simpleEventBus.fireEvent(new DisableSelectionEvent());
                 } else {
-                    //selection is available
-                    initSelectionModel();
+                    simpleEventBus.fireEvent(new EnableSelectionEvent());
                 }
-
             }
         });
     }
@@ -145,13 +141,7 @@ public class MyDockLayoutPanel extends Composite {
         goButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
-
-                StringBuilder res = new StringBuilder();
-                for (User item : selectedUsers) {
-                    res.append(item.getId()).append(USERS_SEPARATOR).append(item.getEmail()).append(BR);
-                }
-
-                showDialogBox(res);
+                simpleEventBus.fireEvent(new GoButtonEvent());
             }
         });
     }
@@ -164,20 +154,6 @@ public class MyDockLayoutPanel extends Composite {
         dialogBox.show();
     }
 
-    private void initDataSource() {
-        ListDataProvider<User> dataProvider = new ListDataProvider<User>();
-        List<User> list = dataProvider.getList();
-
-        final List<User> userList = UserHelper.generateUserList(USER_GENERATED_COUNT);
-
-        for (User u : userList) {
-            list.add(u);
-        }
-
-        dataProvider.addDataDisplay(cellTable);
-    }
-
-
     private void initSelectionModel() {
 
         //if we put sel. checkbox, we need to know what item were selected
@@ -187,22 +163,10 @@ public class MyDockLayoutPanel extends Composite {
         }
 
         selectionModel = new SingleSelectionModel<User>();
+
         selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
             public void onSelectionChange(SelectionChangeEvent event) {
-
-                //fillDataFields
-                Set<User> selectedSet = selectionModel.getSelectedSet();
-
-                if (selectedSet.isEmpty()) {
-                    email.setValue(EMPTY_STRING);
-                    surname.setValue(EMPTY_STRING);
-                    return;
-                }
-
-                for (User user : selectedSet) {
-                    email.setValue(user.getEmail());
-                    surname.setValue(user.getSurName());
-                }
+                simpleEventBus.fireEvent(new RowSelectionEvent());
             }
         });
 
@@ -219,19 +183,7 @@ public class MyDockLayoutPanel extends Composite {
         headerCheckbox.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
             @Override
             public void onValueChange(ValueChangeEvent<Boolean> event) {
-                selectedUsers.clear();
-
-                if (event.getValue()) {
-                    selectedUsers.addAll(cellTable.getVisibleItems());
-                    headerCheckbox.setValue(true);
-                    goButton.setEnabled(true);
-                } else {
-                    goButton.setEnabled(false);
-                    headerCheckbox.setValue(false);
-                }
-
-                cellTable.redraw();
-                cellTable.redrawHeaders();
+                simpleEventBus.fireEvent(new HeaderCheckBoxEvent().setSelected(event.getValue()));
             }
         });
     }
@@ -298,7 +250,6 @@ public class MyDockLayoutPanel extends Composite {
                 .createCustomManager(new DefaultSelectionEventManager.BlacklistEventTranslator<User>(col));
     }
 
-
     private class CustomColumn extends Column<User, Boolean> {
 
         public CustomColumn() {
@@ -350,7 +301,6 @@ public class MyDockLayoutPanel extends Composite {
 
         @Override
         public void render(Context context, Boolean isCurrentCellChecked, SafeHtmlBuilder sb) {
-
             //if cb dis not sel.  typical rendering
             if (!isCheckboxesDisabled) {
                 super.render(context, isCurrentCellChecked, sb);
@@ -365,4 +315,94 @@ public class MyDockLayoutPanel extends Composite {
         }
     }
 
+    @Override
+    public void setPresenter(PersonPresenter personPresenter) {
+        this.presenter = personPresenter;
+    }
+
+    @Override
+    public void setCellTableDate() {
+        this.presenter.getFullDataSource().addDataDisplay(cellTable);
+    }
+
+    private void initSimpleEventBus() {
+        simpleEventBus.addHandler(DisableSelectionEvent.TYPE, new DisableSelectionEventHandler() {
+            @Override
+            public void disableSelection(DisableSelectionEvent event) {
+                Set<User> selectedItemInOldSelectionModel = selectionModel.getSelectedSet();
+                selectionModel = new SingleSelectionModel<User>();
+                cellTable.setSelectionModel(selectionModel, getBlackListSelectionManager(0, 1, 3, 4));
+                selectItemAfterSelectionModelReplacing(selectedItemInOldSelectionModel);
+            }
+        });
+
+
+        simpleEventBus.addHandler(EnableSelectionEvent.TYPE, new EnableSelectionEventHandler() {
+            @Override
+            public void enableSelection(EnableSelectionEventHandler event) {
+                initSelectionModel();
+            }
+        });
+
+        simpleEventBus.addHandler(RowSelectionEvent.TYPE, new RowSelectionEvenHandler() {
+            @Override
+            public void select(RowSelectionEvent event) {
+                //fillDataFields
+                Set<User> selectedSet = selectionModel.getSelectedSet();
+                if (selectedSet.isEmpty()) {
+                    email.setValue(EMPTY_STRING);
+                    surname.setValue(EMPTY_STRING);
+                    return;
+                }
+                for (User user : selectedSet) {
+                    email.setValue(user.getEmail());
+                    surname.setValue(user.getSurName());
+                }
+            }
+        });
+
+        simpleEventBus.addHandler(DisableCheckBoxesEvent.TYPE, new DisableCheckBoxesEventHandler() {
+            @Override
+            public void disable(DisableCheckBoxesEvent event) {
+                isCheckboxesDisabled = event.isSelected();
+                headerCheckbox.setEnabled(!isCheckboxesDisabled);
+                cellTable.redrawHeaders();
+                cellTable.redraw();
+            }
+        });
+
+
+        simpleEventBus.addHandler(HeaderCheckBoxEvent.TYPE, new HeaderCheckBoxEventHandler() {
+            @Override
+            public void handle(HeaderCheckBoxEvent event) {
+                selectedUsers.clear();
+                if (event.isSelected()) {
+                    selectedUsers.addAll(cellTable.getVisibleItems());
+                    headerCheckbox.setValue(true);
+                    goButton.setEnabled(true);
+                } else {
+                    goButton.setEnabled(false);
+                    headerCheckbox.setValue(false);
+                }
+
+                cellTable.redraw();
+                cellTable.redrawHeaders();
+            }
+        });
+
+
+        simpleEventBus.addHandler(GoButtonEvent.TYPE, new GoButtonEventHandler() {
+            @Override
+            public void handle(GoButtonEvent event) {
+
+                StringBuilder res = new StringBuilder();
+                for (User item : selectedUsers) {
+                    res.append(item.getId()).append(USERS_SEPARATOR).append(item.getEmail()).append(BR);
+                }
+
+                showDialogBox(res);
+
+            }
+        });
+    }
 }

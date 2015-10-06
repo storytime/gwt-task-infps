@@ -1,5 +1,7 @@
 package org.example.web.presenter.impl;
 
+import com.google.gwt.user.client.ui.SplitLayoutPanel;
+import com.google.gwt.user.client.ui.Widget;
 import org.example.model.User;
 import org.example.util.UserHelper;
 import org.example.web.presenter.UserListPresenter;
@@ -19,8 +21,9 @@ public class UserListPresenterImpl implements UserListPresenter {
     }
 
     @Override
-    public void go() {
-
+    public void go(final Widget splitLayoutPanel) {
+        ((SplitLayoutPanel) splitLayoutPanel).clear();
+        ((SplitLayoutPanel) splitLayoutPanel).addNorth(userListView.asWidget(), 500);
     }
 
     @Override
@@ -30,6 +33,6 @@ public class UserListPresenterImpl implements UserListPresenter {
 
     @Override
     public List<User> getUserData() {
-        return  UserHelper.generateUserList(USER_GENERATED_COUNT);
+        return UserHelper.generateUserList(USER_GENERATED_COUNT);
     }
 }

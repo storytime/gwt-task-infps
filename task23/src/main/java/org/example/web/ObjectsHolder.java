@@ -15,9 +15,9 @@ import org.example.web.view.impl.UserListViewImpl;
 public class ObjectsHolder {
 
     private static EventBus eventBus;
-    private static SelectionInfoView selectionInfoView;
-    private static ShotInfoView shotInfoView;
-    private static UserListView userListView;
+    private static SelectionInfoViewImpl selectionInfoView;
+    private static ShotInfoViewImpl shotInfoView;
+    private static UserListViewImpl userListView;
 
     private ObjectsHolder() {
     }
@@ -43,7 +43,7 @@ public class ObjectsHolder {
         return shotInfoView;
     }
 
-    public static UserListView getUserListView() {
+    public static UserListViewImpl getUserListView() {
         if (userListView == null)
             userListView = new UserListViewImpl();
 

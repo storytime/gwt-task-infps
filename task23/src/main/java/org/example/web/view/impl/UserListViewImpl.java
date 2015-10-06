@@ -65,7 +65,7 @@ public class UserListViewImpl extends Composite implements UserListView {
     public UserListViewImpl() {
         initCellTable();
         initCellTableMainColumns();
-        initDataSource();
+       // initDataSource();
         initSelectionModel();
         initHeaderCheckbox();
         initTableCheckBoxes();
@@ -111,19 +111,6 @@ public class UserListViewImpl extends Composite implements UserListView {
         cellTable.addColumn(roleColumn, ROLE);
     }
 
-    private void initDataSource() {
-        ListDataProvider<User> dataProvider = new ListDataProvider<User>();
-        List<User> list = dataProvider.getList();
-
-        final List<User> userList = presenter.getUserData();
-
-        for (User u : userList) {
-            list.add(u);
-        }
-
-        dataProvider.addDataDisplay(cellTable);
-    }
-
     private void initSelectionModel() {
 
         //if we put sel. checkbox, we need to know what item were selected
@@ -160,6 +147,20 @@ public class UserListViewImpl extends Composite implements UserListView {
             selectItemAfterSelectionModelReplacing(selectedItemInOldSelectionModel);
     }
 
+
+    public void initDataSource() {
+        ListDataProvider<User> dataProvider = new ListDataProvider<User>();
+        List<User> list = dataProvider.getList();
+
+        final List<User> userList = presenter.getUserData();
+
+        for (User u : userList) {
+            list.add(u);
+        }
+
+        dataProvider.addDataDisplay(cellTable);
+    }
+    
     private void initHeaderCheckbox() {
         headerCheckbox = new CheckBoxHeader();
         headerCheckbox.addValueChangeHandler(new ValueChangeHandler<Boolean>() {

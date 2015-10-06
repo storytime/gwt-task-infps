@@ -3,6 +3,7 @@ package org.example.web;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
+import org.example.web.presenter.impl.UserListPresenterImpl;
 import org.example.web.view.UserListView;
 import org.example.web.view.impl.SelectionInfoViewImpl;
 import org.example.web.view.impl.ShotInfoViewImpl;
@@ -15,7 +16,9 @@ public class TestApp implements EntryPoint {
         final RootLayoutPanel widgets = RootLayoutPanel.get();
         SplitLayoutPanel splitLayoutPanel = new SplitLayoutPanel();
 
-        UserListView userListView = new UserListViewImpl();
+        UserListView userListView = ObjectsHolder.getUserListView();
+        new UserListPresenterImpl(userListView);
+
         SelectionInfoViewImpl selectionInfoView = new SelectionInfoViewImpl();
         ShotInfoViewImpl shotInfoView = new ShotInfoViewImpl();
 

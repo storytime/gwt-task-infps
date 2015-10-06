@@ -36,7 +36,7 @@ public class ObjectsHolder {
         return selectionInfoView;
     }
 
-    public static ShotInfoView getShotInfoView() {
+    public static ShotInfoViewImpl getShotInfoView() {
         if (shotInfoView == null)
             shotInfoView = new ShotInfoViewImpl();
 

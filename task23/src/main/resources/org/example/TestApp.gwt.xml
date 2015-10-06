@@ -8,6 +8,7 @@
     <source path="web"/>
     <source path="util"/>
     <source path="model"/>
+    <source path="event"/>
 
     <inherits name='com.google.gwt.user.theme.standard.Standard'/>
      <!--<inherits name='com.google.gwt.user.theme.chrome.Chrome'/>-->

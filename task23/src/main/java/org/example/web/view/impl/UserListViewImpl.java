@@ -14,18 +14,22 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.TextColumn;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.view.client.DefaultSelectionEventManager;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
+import org.example.event.impl.RowSelectionEvent;
 import org.example.model.User;
 import org.example.util.UserHelper;
 import org.example.web.CheckBoxHeader;
+import org.example.web.ObjectsHolder;
 import org.example.web.presenter.Presenter;
 import org.example.web.presenter.UserListPresenter;
 import org.example.web.view.UserListView;
@@ -65,7 +69,7 @@ public class UserListViewImpl extends Composite implements UserListView {
     public UserListViewImpl() {
         initCellTable();
         initCellTableMainColumns();
-       // initDataSource();
+        // initDataSource();
         initSelectionModel();
         initHeaderCheckbox();
         initTableCheckBoxes();
@@ -120,22 +124,14 @@ public class UserListViewImpl extends Composite implements UserListView {
         }
 
         selectionModel = new SingleSelectionModel<User>();
+
         selectionModel.addSelectionChangeHandler(new SelectionChangeEvent.Handler() {
             public void onSelectionChange(SelectionChangeEvent event) {
-
-                //fillDataFields
                 Set<User> selectedSet = selectionModel.getSelectedSet();
-
-//                if (selectedSet.isEmpty()) {
-//                    email.setValue(EMPTY_STRING);
-//                    surname.setValue(EMPTY_STRING);
-//                    return;
-//                }
-//
-//                for (User user : selectedSet) {
-//                    email.setValue(user.getEmail());
-//                    surname.setValue(user.getSurName());
-//                }
+                for (User user : selectedSet) {
+                    Window.alert("fire RS event: user " + user.getEmail());
+                    ObjectsHolder.getEventBus().fireEvent(new RowSelectionEvent().setUser(user));
+                }
             }
         });
 
@@ -160,7 +156,7 @@ public class UserListViewImpl extends Composite implements UserListView {
 
         dataProvider.addDataDisplay(cellTable);
     }
-    
+
     private void initHeaderCheckbox() {
         headerCheckbox = new CheckBoxHeader();
         headerCheckbox.addValueChangeHandler(new ValueChangeHandler<Boolean>() {

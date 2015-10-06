@@ -1,5 +1,6 @@
 package org.example.web.presenter.impl;
 
+import com.google.gwt.user.client.ui.Widget;
 import org.example.web.presenter.SelectionInfoPresenter;
 
 /**
@@ -8,7 +9,7 @@ import org.example.web.presenter.SelectionInfoPresenter;
 public class SelectionInfoPresenterImpl implements SelectionInfoPresenter {
 
     @Override
-    public void go() {
+    public void go(Widget splitLayoutPanel) {
 
     }
 

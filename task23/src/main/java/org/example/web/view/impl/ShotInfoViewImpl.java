@@ -6,9 +6,15 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.TextBox;
+import org.example.event.handler.RowSelectionEvenHandler;
+import org.example.event.impl.RowSelectionEvent;
+import org.example.model.User;
+import org.example.web.ObjectsHolder;
 import org.example.web.presenter.Presenter;
 import org.example.web.presenter.ShotInfoPresenter;
 import org.example.web.view.ShotInfoView;
+
+import java.util.Set;
 
 
 /**
@@ -18,10 +24,12 @@ public class ShotInfoViewImpl extends Composite implements ShotInfoView {
 
     private ShotInfoPresenter presenter;
 
-    @UiField
+    private static final String EMPTY_STRING = "";
+
+    @UiField(provided = true)
     public TextBox email;
 
-    @UiField
+    @UiField(provided = true)
     public TextBox surname;
 
     @Override
@@ -35,7 +43,32 @@ public class ShotInfoViewImpl extends Composite implements ShotInfoView {
     private static ShotInfoUiBinder ourUiBinder = GWT.create(ShotInfoUiBinder.class);
 
     public ShotInfoViewImpl() {
+        initTextBoxes();
+        addEventBusHandlers();
         initWidget(ourUiBinder.createAndBindUi(this));
+    }
+
+
+    private void initTextBoxes() {
+        email = new TextBox();
+        surname = new TextBox();
+    }
+    private void addEventBusHandlers() {
+        ObjectsHolder.getEventBus().addHandler(RowSelectionEvent.TYPE, new RowSelectionEvenHandler() {
+            @Override
+            public void select(RowSelectionEvent event) {
+                //fillDataFields
+                User user = event.getUser();
+                if (user == null) {
+                    email.setValue(EMPTY_STRING);
+                    surname.setValue(EMPTY_STRING);
+                    return;
+                } else {
+                    email.setValue(user.getEmail());
+                    surname.setValue(user.getSurName());
+                }
+            }
+        });
     }
 
 

@@ -1,6 +1,9 @@
 package org.example.model;
 
-public class User{
+import org.codehaus.jackson.annotate.JsonCreator;
+import org.codehaus.jackson.annotate.JsonProperty;
+
+public class User {
 
     private Integer id;
     private String name;
@@ -8,7 +11,19 @@ public class User{
     private String email;
     private Roles role;
 
-    public User(Integer id, String name, String surName, String email, Roles role) {
+
+    @JsonCreator
+    public User(
+            @JsonProperty("id")
+            Integer id,
+            @JsonProperty("name")
+            String name,
+            @JsonProperty("surName")
+            String surName,
+            @JsonProperty("email")
+            String email,
+            @JsonProperty("role")
+            Roles role) {
         this.id = id;
         this.name = name;
         this.surName = surName;

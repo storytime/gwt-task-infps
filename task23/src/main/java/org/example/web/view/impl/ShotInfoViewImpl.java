@@ -13,8 +13,8 @@ import org.example.web.ObjectsHolder;
 import org.example.web.presenter.Presenter;
 import org.example.web.presenter.ShotInfoPresenter;
 import org.example.web.view.ShotInfoView;
-
-import java.util.Set;
+import org.fusesource.restygwt.client.Method;
+import org.fusesource.restygwt.client.MethodCallback;
 
 
 /**
@@ -57,19 +57,28 @@ public class ShotInfoViewImpl extends Composite implements ShotInfoView {
         ObjectsHolder.getEventBus().addHandler(RowSelectionEvent.TYPE, new RowSelectionEvenHandler() {
             @Override
             public void select(RowSelectionEvent event) {
-                //fillDataFields
-                User user = event.getUser();
-                if (user == null) {
+
+                final Integer userId = event.getUserId();
+
+                if (userId == null) {
                     email.setValue(EMPTY_STRING);
                     surname.setValue(EMPTY_STRING);
                     return;
                 } else {
-                    email.setValue(user.getEmail());
-                    surname.setValue(user.getSurName());
+                    presenter.loadUserData(userId, new MethodCallback<User>() {
+                        @Override
+                        public void onFailure(Method method, Throwable throwable) {
+                        }
+
+                        @Override
+                        public void onSuccess(Method method, User user) {
+                            email.setText(user.getEmail());
+                            surname.setText(user.getSurName());
+                        }
+                    });
                 }
             }
         });
     }
-
 
 }

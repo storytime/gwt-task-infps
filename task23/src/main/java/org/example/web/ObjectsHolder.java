@@ -1,10 +1,10 @@
 package org.example.web;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.EventBus;
 import com.google.gwt.event.shared.SimpleEventBus;
+import org.example.api.UserClient;
 import org.example.web.view.SelectionInfoView;
-import org.example.web.view.ShotInfoView;
-import org.example.web.view.UserListView;
 import org.example.web.view.impl.SelectionInfoViewImpl;
 import org.example.web.view.impl.ShotInfoViewImpl;
 import org.example.web.view.impl.UserListViewImpl;
@@ -18,6 +18,7 @@ public class ObjectsHolder {
     private static SelectionInfoViewImpl selectionInfoView;
     private static ShotInfoViewImpl shotInfoView;
     private static UserListViewImpl userListView;
+    private static UserClient userClient;
 
     private ObjectsHolder() {
     }
@@ -48,5 +49,12 @@ public class ObjectsHolder {
             userListView = new UserListViewImpl();
 
         return userListView;
+    }
+
+    public static UserClient getUserClient() {
+        if (userClient == null)
+            userClient = GWT.create(UserClient.class);
+
+        return userClient;
     }
 }

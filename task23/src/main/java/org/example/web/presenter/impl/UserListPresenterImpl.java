@@ -3,15 +3,14 @@ package org.example.web.presenter.impl;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
 import org.example.model.User;
-import org.example.util.UserHelper;
+import org.example.web.ObjectsHolder;
 import org.example.web.presenter.UserListPresenter;
 import org.example.web.view.UserListView;
+import org.fusesource.restygwt.client.MethodCallback;
 
 import java.util.List;
 
 public class UserListPresenterImpl implements UserListPresenter {
-
-    private static final int USER_GENERATED_COUNT = 10;
 
     private UserListView userListView;
 
@@ -32,7 +31,7 @@ public class UserListPresenterImpl implements UserListPresenter {
     }
 
     @Override
-    public List<User> getUserData() {
-        return UserHelper.generateUserList(USER_GENERATED_COUNT);
+    public void loadUsersData(MethodCallback<List<User>> callback) {
+        ObjectsHolder.getUserClient().getUsers(callback);
     }
 }

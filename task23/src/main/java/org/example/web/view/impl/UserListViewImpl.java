@@ -14,11 +14,9 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.TextColumn;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.view.client.DefaultSelectionEventManager;
@@ -33,6 +31,8 @@ import org.example.web.ObjectsHolder;
 import org.example.web.presenter.Presenter;
 import org.example.web.presenter.UserListPresenter;
 import org.example.web.view.UserListView;
+import org.fusesource.restygwt.client.Method;
+import org.fusesource.restygwt.client.MethodCallback;
 
 import java.util.*;
 
@@ -129,8 +129,8 @@ public class UserListViewImpl extends Composite implements UserListView {
             public void onSelectionChange(SelectionChangeEvent event) {
                 Set<User> selectedSet = selectionModel.getSelectedSet();
                 for (User user : selectedSet) {
-                    Window.alert("fire RS event: user " + user.getEmail());
-                    ObjectsHolder.getEventBus().fireEvent(new RowSelectionEvent().setUser(user));
+//                    Window.alert("fire RS event: user " + user.getEmail());
+                    ObjectsHolder.getEventBus().fireEvent(new RowSelectionEvent().setUserId(user.getId()));
                 }
             }
         });
@@ -146,14 +146,19 @@ public class UserListViewImpl extends Composite implements UserListView {
 
     public void initDataSource() {
         ListDataProvider<User> dataProvider = new ListDataProvider<User>();
-        List<User> list = dataProvider.getList();
+        final List<User> list = dataProvider.getList();
 
-        final List<User> userList = presenter.getUserData();
+        presenter.loadUsersData(new MethodCallback<List<User>>() {
+            @Override
+            public void onFailure(Method method, Throwable throwable) {}
 
-        for (User u : userList) {
-            list.add(u);
-        }
+            @Override
+            public void onSuccess(Method method, List<User> users) {
+                list.clear();
+                list.addAll(users);
 
+            }
+        });
         dataProvider.addDataDisplay(cellTable);
     }
 

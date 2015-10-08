@@ -7,7 +7,7 @@ import org.example.model.User;
 public class RowSelectionEvent extends GwtEvent<RowSelectionEvenHandler> {
 
     public final static Type<RowSelectionEvenHandler> TYPE = new Type<RowSelectionEvenHandler>();
-    private User user;
+    private Integer userId;
 
     @Override
     public Type<RowSelectionEvenHandler> getAssociatedType() {
@@ -19,12 +19,12 @@ public class RowSelectionEvent extends GwtEvent<RowSelectionEvenHandler> {
         handler.select(this);
     }
 
-    public User getUser() {
-        return user;
+    public Integer getUserId() {
+        return userId;
     }
 
-    public RowSelectionEvent setUser(User user) {
-        this.user = user;
+    public RowSelectionEvent setUserId(Integer id) {
+        this.userId = id;
         return this;
     }
 }

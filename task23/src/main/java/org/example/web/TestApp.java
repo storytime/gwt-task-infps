@@ -8,10 +8,14 @@ import org.example.web.presenter.impl.UserListPresenterImpl;
 import org.example.web.view.impl.SelectionInfoViewImpl;
 import org.example.web.view.impl.ShotInfoViewImpl;
 import org.example.web.view.impl.UserListViewImpl;
+import org.fusesource.restygwt.client.Defaults;
 
 public class TestApp implements EntryPoint {
 
     public void onModuleLoad() {
+
+        Defaults.setServiceRoot("/");
+
         SplitLayoutPanel splitLayoutPanel = new SplitLayoutPanel();
 
         UserListViewImpl userListViewImpl = ObjectsHolder.getUserListView();
@@ -19,12 +23,12 @@ public class TestApp implements EntryPoint {
         userListViewImpl.initDataSource();
         userListPresenter.go(splitLayoutPanel);
 
+        SelectionInfoViewImpl selectionInfoView = new SelectionInfoViewImpl();
+        splitLayoutPanel.addEast(selectionInfoView, 1000);
+
         ShotInfoViewImpl shotInfoViewImpl = ObjectsHolder.getShotInfoView();
         ShotInfoPresenterImpl shotInfoPresenter = new ShotInfoPresenterImpl(shotInfoViewImpl);
         shotInfoPresenter.go(splitLayoutPanel);
-
-//        SelectionInfoViewImpl selectionInfoView = new SelectionInfoViewImpl();
-//        splitLayoutPanel.addEast(selectionInfoView, 1000);
 
         RootLayoutPanel.get().add(splitLayoutPanel);
     }

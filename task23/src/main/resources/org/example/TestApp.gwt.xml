@@ -2,6 +2,7 @@
         "http://google-web-toolkit.googlecode.com/svn/releases/2.0/distro-source/core/src/gwt-module.dtd">
 <module rename-to="TestApp">
 
+    <inherits name="org.fusesource.restygwt.RestyGWT"/>
     <inherits name='com.google.gwt.user.User'/>
 
     <entry-point class='org.example.web.TestApp'/>
@@ -9,10 +10,7 @@
     <source path="util"/>
     <source path="model"/>
     <source path="event"/>
+    <source path="api"/>
 
     <inherits name='com.google.gwt.user.theme.standard.Standard'/>
-     <!--<inherits name='com.google.gwt.user.theme.chrome.Chrome'/>-->
-     <!--<inherits name='com.google.gwt.user.theme.dark.Dark'/>-->
-
-    <!--<inherits name="com.google.gwt.logging.Logging"/>-->
 </module>

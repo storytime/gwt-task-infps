@@ -3,9 +3,10 @@ package org.example.web;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.user.client.ui.RootLayoutPanel;
 import com.google.gwt.user.client.ui.SplitLayoutPanel;
+import org.example.web.presenter.impl.SelectionInfoPresenterImpl;
 import org.example.web.presenter.impl.ShotInfoPresenterImpl;
 import org.example.web.presenter.impl.UserListPresenterImpl;
-import org.example.web.view.impl.SelectionInfoViewImpl;
+import org.example.web.view.SelectionInfoView;
 import org.example.web.view.impl.ShotInfoViewImpl;
 import org.example.web.view.impl.UserListViewImpl;
 import org.fusesource.restygwt.client.Defaults;
@@ -23,8 +24,9 @@ public class TestApp implements EntryPoint {
         userListViewImpl.initDataSource();
         userListPresenter.go(splitLayoutPanel);
 
-        SelectionInfoViewImpl selectionInfoView = new SelectionInfoViewImpl();
-        splitLayoutPanel.addEast(selectionInfoView, 1000);
+        SelectionInfoView selectionInfoView = ObjectsHolder.getSelectionInfoView();
+        SelectionInfoPresenterImpl selectionInfoPresenter = new SelectionInfoPresenterImpl(selectionInfoView);
+        selectionInfoPresenter.go(splitLayoutPanel);
 
         ShotInfoViewImpl shotInfoViewImpl = ObjectsHolder.getShotInfoView();
         ShotInfoPresenterImpl shotInfoPresenter = new ShotInfoPresenterImpl(shotInfoViewImpl);

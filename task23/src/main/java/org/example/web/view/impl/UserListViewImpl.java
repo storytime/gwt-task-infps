@@ -7,6 +7,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -17,13 +19,15 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.TextColumn;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.*;
 import com.google.gwt.view.client.DefaultSelectionEventManager;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SingleSelectionModel;
-import org.example.event.impl.RowSelectionEvent;
+import org.example.event.handler.DisableCheckBoxesEventHandler;
+import org.example.event.handler.SelectionModelCheckBoxEventHandler;
+import org.example.event.handler.ShowDialogEvenHandler;
+import org.example.event.impl.*;
 import org.example.model.User;
 import org.example.util.UserHelper;
 import org.example.web.CheckBoxHeader;
@@ -36,16 +40,18 @@ import org.fusesource.restygwt.client.MethodCallback;
 
 import java.util.*;
 
-/**
- * Created by Bogdan.Fedorchenko on 10/6/2015.
- */
 public class UserListViewImpl extends Composite implements UserListView {
 
     private UserListPresenter presenter;
-    private static final String WIDTH = "100%";
+    private static final String CLOSE = "Close";
+    private static final String BR = "</br>";
     private static final String ID = "ID";
     private static final String NAME = "Name";
     private static final String ROLE = "Role";
+    private static final String USER_INFO = "User info";
+    private static final String USERS_SEPARATOR = "    ";
+    private static final String WIDTH = "100%";
+
 
     private CheckBoxHeader headerCheckbox;
     private List<User> selectedUsers = new ArrayList<User>();
@@ -69,11 +75,10 @@ public class UserListViewImpl extends Composite implements UserListView {
     public UserListViewImpl() {
         initCellTable();
         initCellTableMainColumns();
-        // initDataSource();
         initSelectionModel();
         initHeaderCheckbox();
         initTableCheckBoxes();
-
+        addEventBusHandlers();
         initWidget(ourUiBinder.createAndBindUi(this));
     }
 
@@ -129,7 +134,6 @@ public class UserListViewImpl extends Composite implements UserListView {
             public void onSelectionChange(SelectionChangeEvent event) {
                 Set<User> selectedSet = selectionModel.getSelectedSet();
                 for (User user : selectedSet) {
-//                    Window.alert("fire RS event: user " + user.getEmail());
                     ObjectsHolder.getEventBus().fireEvent(new RowSelectionEvent().setUserId(user.getId()));
                 }
             }
@@ -150,7 +154,8 @@ public class UserListViewImpl extends Composite implements UserListView {
 
         presenter.loadUsersData(new MethodCallback<List<User>>() {
             @Override
-            public void onFailure(Method method, Throwable throwable) {}
+            public void onFailure(Method method, Throwable throwable) {
+            }
 
             @Override
             public void onSuccess(Method method, List<User> users) {
@@ -172,9 +177,9 @@ public class UserListViewImpl extends Composite implements UserListView {
                 if (event.getValue()) {
                     selectedUsers.addAll(cellTable.getVisibleItems());
                     headerCheckbox.setValue(true);
-//                    goButton.setEnabled(true);
+                    ObjectsHolder.getEventBus().fireEvent(new GoButtonEvent().setStatus(true));
                 } else {
-//                    goButton.setEnabled(false);
+                    ObjectsHolder.getEventBus().fireEvent(new GoButtonEvent().setStatus(false));
                     headerCheckbox.setValue(false);
                 }
 
@@ -211,9 +216,9 @@ public class UserListViewImpl extends Composite implements UserListView {
 
             //set go button status
             if (selectedUsers.size() > 0) {
-//                goButton.setEnabled(true);
+                ObjectsHolder.getEventBus().fireEvent(new GoButtonEvent().setStatus(true));
             } else {
-//                goButton.setEnabled(false);
+                ObjectsHolder.getEventBus().fireEvent(new GoButtonEvent().setStatus(false));
             }
 
             //set header status
@@ -261,4 +266,76 @@ public class UserListViewImpl extends Composite implements UserListView {
         }
     }
 
+
+    private void addEventBusHandlers() {
+        ObjectsHolder.getEventBus().addHandler(ShowDialogEvent.TYPE, new ShowDialogEvenHandler() {
+            @Override
+            public void show(ShowDialogEvent event) {
+                StringBuilder res = new StringBuilder();
+                for (User item : selectedUsers) {
+                    res.append(item.getId()).append(USERS_SEPARATOR).append(item.getEmail()).append(BR);
+                }
+                showDialogBox(res);
+
+            }
+        });
+
+        ObjectsHolder.getEventBus().addHandler(SelectionModelCheckBoxEvent.TYPE, new SelectionModelCheckBoxEventHandler() {
+            @Override
+            public void handle(SelectionModelCheckBoxEvent event) {
+                if (event.isStatus()) {
+                    Set<User> selectedItemInOldSelectionModel = selectionModel.getSelectedSet();
+                    selectionModel = new SingleSelectionModel<User>();
+                    cellTable.setSelectionModel(selectionModel, getBlackListSelectionManager(0, 1, 2, 3));
+                    selectItemAfterSelectionModelReplacing(selectedItemInOldSelectionModel);
+                } else {
+                    initSelectionModel();
+                }
+
+            }
+        });
+
+        ObjectsHolder.getEventBus().addHandler(DisableCheckBoxesEvent.TYPE, new DisableCheckBoxesEventHandler() {
+            @Override
+            public void handle(DisableCheckBoxesEvent event) {
+                isCheckboxesDisabled = event.isSelected();
+                headerCheckbox.setEnabled(!isCheckboxesDisabled);
+                cellTable.redrawHeaders();
+                cellTable.redraw();
+            }
+        });
+    }
+
+    private void showDialogBox(StringBuilder res) {
+        final DialogBox dialogBox = createDialogBox(new DialogBox(), res.toString());
+        dialogBox.setGlassEnabled(true);
+        dialogBox.setAnimationEnabled(true);
+        dialogBox.center();
+        dialogBox.show();
+    }
+
+    private DialogBox createDialogBox(final DialogBox dialogBox, final String text) {
+
+        // set main text
+        dialogBox.setText(USER_INFO);
+
+        // create header
+        VerticalPanel dialogContents = new VerticalPanel();
+        dialogContents.setSpacing(4);
+        dialogBox.setWidget(dialogContents);
+        HTML details = new HTML(text);
+        dialogContents.add(details);
+        dialogContents.setCellHorizontalAlignment(details, HasHorizontalAlignment.ALIGN_CENTER);
+
+        Button closeButton = new Button(CLOSE);
+        closeButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                dialogBox.hide();
+            }
+        });
+
+        dialogContents.add(closeButton);
+        dialogContents.setCellHorizontalAlignment(closeButton, HasHorizontalAlignment.ALIGN_LEFT);
+        return dialogBox;
+    }
 }
